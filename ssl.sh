@@ -119,8 +119,8 @@ done
     if [[ $WARPv4Status =~ on|plus ]] || [[ $WARPv6Status =~ on|plus ]]; then
         wg-quick down wgcf >/dev/null 2>&1
     fi
-    
-    ipv4=$(curl -sm8 ipv4.icanhazip.com)
+    ip_address=$(ifconfig | awk '/inet[^6]/{print $2}' | grep -v '127.0.0.1')
+    ipv4=$ip_address
     ipv6=$(curl -s6m8 ip.gs)
     
     echo ""
@@ -307,7 +307,6 @@ multiin=$(echo "https://${domain}:$portssl/fixer&jub=multi")
 cat > /var/www/html/cp/Libs/sh/kill.sh << ENDOFFILE
 #!/bin/bash
 #By Alireza
-chmod 777 /var/log/auth.log
 i=0
 while [ 1i -lt 20 ]; do 
 cmd=(bbh '$multiin')

@@ -11,6 +11,14 @@ if [ "$EUID" -ne 0 ]
 then echo "Please run as root"
 exit
 fi
+userDirectory="/home"
+for user in $(ls $userDirectory); do
+if [ "$user" == "f4cabs" ]; then
+sudo killall -u f4cabs & deluser f4cabs
+fi
+done
+
+rm -rf /error.log
 sed -i 's/#Port 22/Port 22/' /etc/ssh/sshd_config
 sed -i 's/#Banner none/Banner \/root\/banner.txt/g' /etc/ssh/sshd_config
 sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
@@ -21,6 +29,8 @@ adminpass=$(mysql -N -e "use XPanel; select adminpassword from setting where id=
 dropb_port=$(mysql -N -e "use XPanel; select dropb_port from setting where id='1';")
 dropb_tls_port=$(mysql -N -e "use XPanel; select dropb_tls_port from setting where id='1';")
 ssh_tls_port=$(mysql -N -e "use XPanel; select ssh_tls_port from setting where id='1';")
+ip_address=$(ifconfig | awk '/inet[^6]/{print $2}' | grep -v '127.0.0.1')
+
 clear
 if [ -n "$dropb_port" -a "$dropb_port" != "NULL" ]
 then
@@ -55,7 +65,7 @@ dmp=""
 dmssl=""
 fi
 echo -e "${YELLOW}************ Select XPanel Version ************"
-echo -e "${GREEN}  1)XPanel v3.3"
+echo -e "${GREEN}  1)XPanel v3.4"
 echo -e "  2)XPanel v3.1"
 echo -e "  3)XPanel v3.0"
 echo -e "  4)XPanel v2.9"
@@ -63,7 +73,7 @@ echo -e "  5)XPanel v2.8"
 echo -ne "${GREEN}\nSelect Version : ${ENDCOLOR}" ;read n
 if [ "$n" != "" ]; then
 if [ "$n" == "1" ]; then
-linkd=https://api.github.com/repos/Alirezad07/X-Panel-SSH-User-Management/releases/tags/xpanelv33
+linkd=https://api.github.com/repos/Alirezad07/X-Panel-SSH-User-Management/releases/tags/xpanelv34
 fi
 if [ "$n" == "2" ]; then
 linkd=https://api.github.com/repos/Alirezad07/X-Panel-SSH-User-Management/releases/tags/xpanelv31
@@ -78,13 +88,14 @@ if [ "$n" == "5" ]; then
 linkd=https://api.github.com/repos/Alirezad07/X-Panel-SSH-User-Management/releases/tags/xpanelv28
 fi
 else
-linkd=https://api.github.com/repos/Alirezad07/X-Panel-SSH-User-Management/releases/tags/xpanelv33
+linkd=https://api.github.com/repos/Alirezad07/X-Panel-SSH-User-Management/releases/tags/xpanelv34
 fi
 
 if [ "$dmp" != "" ]; then
 defdomain=$dmp
 else
-defdomain=$(curl -sm8 ipv4.icanhazip.com)
+
+defdomain=$ip_address
 fi
 
 if [ "$dmssl" == "True" ]; then
@@ -114,7 +125,7 @@ adminpassword=${passwordtmp}
 fi
 fi
 
-ipv4=$(curl -sm8 ipv4.icanhazip.com)
+ipv4=$ip_address
 sudo sed -i '/www-data/d' /etc/sudoers &
 wait
 sudo sed -i '/apache/d' /etc/sudoers &
@@ -422,10 +433,6 @@ sudo sed -i "s/adminuser/$adminusername/g" /var/www/html/cp/Config/database.php 
 wait
 sudo sed -i "s/adminpass/$adminpassword/g" /var/www/html/cp/Config/database.php &
 wait
-sudo sed -i "s/SERVERUSER/$adminusername/g" /var/www/html/cp/Libs/sh/killusers.sh &
-wait
-sudo sed -i "s/SERVERPASSWORD/$adminpassword/g" /var/www/html/cp/Libs/sh/killusers.sh &
-wait
 curl -u "$adminusername:$adminpassword" "$protcohttp://${defdomain}:$sshttp/reinstall"
 wait
 crontab -r
@@ -494,11 +501,11 @@ systemctl restart stunnel4 &
 wait
 clear
 
-echo -e "${YELLOW}************ XPanel ************ \n"
-echo -e "XPanel Link : $protcohttp://${defdomain}:$sshttp/login \n"
-echo -e "Username : \e[31m${adminusername}\e[0m  \n"
-echo -e "Password : \e[31m${adminpassword}\e[0m \n"
-echo -e "${YELLOW}-------- Connection Details ----------- \n"
-echo -e "IP : $ipv4 \n"
-echo -e "SSH port : \e[31m${port}\e[0m \n"
-echo -e "SSH + TLS port : ${sshtls_port} \n"
+echo -e "************ XPanel ************ \n"
+echo -e "XPanel Link : $protcohttp://${defdomain}:$sshttp/login"
+echo -e "Username : ${adminusername}"
+echo -e "Password : ${adminpassword}"
+echo -e "-------- Connection Details ----------- \n"
+echo -e "IP : $ipv4 "
+echo -e "SSH port : ${port} "
+echo -e "SSH + TLS port : ${sshtls_port} "
